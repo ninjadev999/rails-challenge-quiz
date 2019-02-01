@@ -25,6 +25,13 @@ class CalendarsController < ApplicationController
     #
     # Otherwise respond with the calendar and a
     # status code of ok
+    return render json: { message: 'Not found' }, status: :not_found unless find_calendar.present?
+
+    if check_owned_by_current_user
+      render json: {calendar: @calendar}, status: :ok
+    else
+      render json: {message: 'Invalid calendar ID'}, status: :not_found 
+    end
   end
 
   def show_user_calendars
@@ -51,6 +58,20 @@ class CalendarsController < ApplicationController
     #
     # If the params[:date] is not a valid date
     # respond with a message and a status code of 422
+    return render json: { message: 'Invalid date'}, status: :unprocessable_entity unless validate_date
+    return render json: { message: 'Not found' }, status: :not_found unless find_calendar.present?
+
+    if check_owned_by_current_user
+      puts "==== params[:date]: #{params[:date]}"
+      puts "==== @calendar: #{@calendar.inspect}"
+      puts "==== @calendar.events: #{@calendar.events.inspect}"
+      events = @calendar.get_month_events(Time.new(params[:date]))
+      puts "==== events: #{events.inspect}"
+      render json: { events: events.inspect }, status: :ok
+      end
+    else
+      render json: { message: 'Not found' }, status: :not_found
+    end
   end
 
   private
@@ -61,5 +82,22 @@ class CalendarsController < ApplicationController
     ).merge(
       user_id: current_user.id
     )
+  end
+
+
+  def find_calendar
+    @calendar = Calendar.where(id: params[:id]).first
+  end
+
+  def check_owned_by_current_user
+    @calendar.present? && (@calendar.user_id == current_user.id)
+  end
+
+  def validate_date
+    begin
+       Date.parse(params[:date])
+    rescue ArgumentError
+       nil
+    end
   end
 end

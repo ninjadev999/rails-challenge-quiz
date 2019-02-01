@@ -16,7 +16,13 @@ class User < ApplicationRecord
   # TODO validate that there are at least
   # two words in the name column
 
-  before_validation :format_email
+  before_validation :format_email, presence: true
+  validates :email, presence: true, format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i, message: 'Email field should not be empty.'}
+  # validates :name, presence: true, format: { with: /\A[A-z]+(?:\s[A-z]+)+\z/, message: "Name field should have at least two words"}
+  validate :validate_agent
+
+  validates_uniqueness_of :email, on: :create
+
   after_create :create_calendar
 
   def access_token(user_agent)
@@ -35,6 +41,12 @@ class User < ApplicationRecord
       # valid respond with the user
       #
       # Else respond with nil
+      if email.present? && password.present?
+        @current_user = User.where(email: email).first
+        return @current_user if @current_user && @current_user.authenticate(password)
+      end
+
+      nil
     end
   end
 
@@ -45,6 +57,14 @@ class User < ApplicationRecord
   end
 
   def format_email
-    self.email = email.downcase
+    unless email.present?
+      errors.add(:happened_at, 'Email field should not be empty.')
+    else
+      self.email = email.downcase
+    end
+  end
+
+  def validate_agent
+    self.agent = 'user' unless agent.present?
   end
 end

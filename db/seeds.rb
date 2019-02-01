@@ -2,6 +2,7 @@ unless User.any?
   User.create!(
     name: 'Test User',
     email: 'test@user.com',
+    agent: 'Rails Test',
     password: 'testtest',
     password_confirmation: 'testtest'
   )
