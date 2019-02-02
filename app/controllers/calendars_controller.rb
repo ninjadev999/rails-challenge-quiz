@@ -58,17 +58,13 @@ class CalendarsController < ApplicationController
     #
     # If the params[:date] is not a valid date
     # respond with a message and a status code of 422
-    return render json: { message: 'Invalid date'}, status: :unprocessable_entity unless validate_date
+    date = validate_date
+    return render json: { message: 'Invalid date'}, status: :unprocessable_entity if date.nil?
     return render json: { message: 'Not found' }, status: :not_found unless find_calendar.present?
 
     if check_owned_by_current_user
-      puts "==== params[:date]: #{params[:date]}"
-      puts "==== @calendar: #{@calendar.inspect}"
-      puts "==== @calendar.events: #{@calendar.events.inspect}"
-      events = @calendar.get_month_events(Time.new(params[:date]))
-      puts "==== events: #{events.inspect}"
-      render json: { events: events.inspect }, status: :ok
-      end
+      @events = @calendar.get_month_events(date)
+      render json: { events: @events }, status: :ok
     else
       render json: { message: 'Not found' }, status: :not_found
     end
@@ -95,9 +91,10 @@ class CalendarsController < ApplicationController
 
   def validate_date
     begin
-       Date.parse(params[:date])
-    rescue ArgumentError
+      DateTime.parse(params[:date])
+    rescue ArgumentError => error
        nil
     end
   end
+
 end

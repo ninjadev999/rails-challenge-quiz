@@ -18,7 +18,7 @@ class User < ApplicationRecord
 
   before_validation :format_email, presence: true
   validates :email, presence: true, format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i, message: 'Email field should not be empty.'}
-  # validates :name, presence: true, format: { with: /\A[A-z]+(?:\s[A-z]+)+\z/, message: "Name field should have at least two words"}
+  validates :name, presence: true, format: { with: /\A[A-z]+(?:\s[A-z]+)+\z/, message: "Name field should have at least two words"}
   validate :validate_agent
 
   validates_uniqueness_of :email, on: :create
@@ -65,6 +65,6 @@ class User < ApplicationRecord
   end
 
   def validate_agent
-    self.agent = 'user' unless agent.present?
+    self.agent = 'Rails Testing' unless agent.present?
   end
 end

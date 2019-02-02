@@ -7,6 +7,7 @@ class ApplicationController < ActionController::API
   before_action :set_current_user, :authenticate_request
 
   rescue_from ActionController::RoutingError, with: :route_not_found_handler
+  skip_before_action :set_current_user, :authenticate_request, only: [:route_not_found]
 
   def route_not_found
     raise ActionController::RoutingError.new(params[:path])
@@ -22,8 +23,9 @@ class ApplicationController < ActionController::API
     # is the same as the the one in the token, find
     # the user by the user_id inside the token hash
     # and set the @current_user to that user
-    if !token.nil? and token['user_id'].present? and token['user_agent'].present?
-      @current_user = User.where(id: token['user_id']).first
+    if token.present? and token['user_id'].present? and token['user_agent'].present?
+      user = User.where(id: token['user_id']).first
+      @current_user = user if user.agent == token['user_agent']
     end
   end
 

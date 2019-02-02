@@ -20,12 +20,13 @@ class UsersController < ApplicationController
     # full message or default message and
     # a status code of unprocessable entity status
     @user = User.new(user_params)
-
+    @user.agent = params[:user_agent].present? ? params[:user_agent] : 'user'
+    
     if @user.save
       render json: {
                 user: @user, 
                 message: 'Account created successfully', 
-                access_token: @user.access_token('user')
+                access_token: @user.access_token(@user.agent)
              }, 
              status: :created
     else
@@ -57,12 +58,12 @@ class UsersController < ApplicationController
   private
 
   def check_authentication_status
-    render json: {access_token: @current_user.access_token('user')}, status: :ok if @current_user
+    render json: {access_token: @current_user.access_token('Rails Testing')}, status: :ok if @current_user
     render json: { message: 'Not Authorized' }, status: 401 unless @current_user
   end
 
   def user_params
-    params.require(:user).permit(:name, :email, :agent, :password, :password_confirmation, :access_token)
+    params.require(:user).permit(:name, :email, :password, :password_confirmation, :access_token)
   end
 
   def update_params
